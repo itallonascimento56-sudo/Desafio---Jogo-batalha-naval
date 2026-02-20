@@ -1,133 +1,121 @@
 #include <stdio.h>
 
 #define TAM 10
-#define TAM_NAVIO 3
+#define TAM_HAB 5
 
 int main() {
 
     /* =====================================================
-       1. DECLARAÇÃO E INICIALIZAÇÃO DO TABULEIRO
+       1. CRIAÇÃO DO TABULEIRO 10x10
        ===================================================== */
 
     int tabuleiro[TAM][TAM];
 
-    for (int linha = 0; linha < TAM; linha++) {
-        for (int coluna = 0; coluna < TAM; coluna++) {
-            tabuleiro[linha][coluna] = 0; // 0 = água
+    for (int i = 0; i < TAM; i++) {
+        for (int j = 0; j < TAM; j++) {
+            tabuleiro[i][j] = 0; // Água
         }
     }
 
     /* =====================================================
-       2. DEFINIÇÃO DAS COORDENADAS INICIAIS
+       2. POSICIONANDO NAVIOS (exemplo simples)
        ===================================================== */
 
-    // Horizontal
-    int linhaH = 1, colunaH = 2;
+    for (int i = 2; i < 5; i++) {
+        tabuleiro[2][i] = 3; // Navio horizontal
+    }
 
-    // Vertical
-    int linhaV = 4, colunaV = 7;
-
-    // Diagonal principal (↘)
-    int linhaD1 = 0, colunaD1 = 0;
-
-    // Diagonal secundária (↙)
-    int linhaD2 = 0, colunaD2 = 9;
+    for (int i = 4; i < 7; i++) {
+        tabuleiro[i][7] = 3; // Navio vertical
+    }
 
     /* =====================================================
-       3. POSICIONAMENTO NAVIO HORIZONTAL
+       3. MATRIZES DE HABILIDADE
        ===================================================== */
 
-    if (colunaH + TAM_NAVIO <= TAM) {
+    int cone[TAM_HAB][TAM_HAB];
+    int cruz[TAM_HAB][TAM_HAB];
+    int octaedro[TAM_HAB][TAM_HAB];
 
-        int sobreposicao = 0;
+    int centro = TAM_HAB / 2;
 
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            if (tabuleiro[linhaH][colunaH + i] != 0) {
-                sobreposicao = 1;
-            }
-        }
+    /* --------- CONE ---------
+       Expande para baixo
+    */
+    for (int i = 0; i < TAM_HAB; i++) {
+        for (int j = 0; j < TAM_HAB; j++) {
 
-        if (!sobreposicao) {
-            for (int i = 0; i < TAM_NAVIO; i++) {
-                tabuleiro[linhaH][colunaH + i] = 3;
+            if (j >= centro - i && j <= centro + i) {
+                cone[i][j] = 1;
+            } else {
+                cone[i][j] = 0;
             }
         }
     }
 
-    /* =====================================================
-       4. POSICIONAMENTO NAVIO VERTICAL
-       ===================================================== */
+    /* --------- CRUZ --------- */
+    for (int i = 0; i < TAM_HAB; i++) {
+        for (int j = 0; j < TAM_HAB; j++) {
 
-    if (linhaV + TAM_NAVIO <= TAM) {
-
-        int sobreposicao = 0;
-
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            if (tabuleiro[linhaV + i][colunaV] != 0) {
-                sobreposicao = 1;
-            }
-        }
-
-        if (!sobreposicao) {
-            for (int i = 0; i < TAM_NAVIO; i++) {
-                tabuleiro[linhaV + i][colunaV] = 3;
+            if (i == centro || j == centro) {
+                cruz[i][j] = 1;
+            } else {
+                cruz[i][j] = 0;
             }
         }
     }
 
-    /* =====================================================
-       5. POSICIONAMENTO NAVIO DIAGONAL PRINCIPAL (↘)
-       linha++ e coluna++
-       ===================================================== */
+    /* --------- OCTAEDRO (Losango) --------- */
+    for (int i = 0; i < TAM_HAB; i++) {
+        for (int j = 0; j < TAM_HAB; j++) {
 
-    if (linhaD1 + TAM_NAVIO <= TAM && colunaD1 + TAM_NAVIO <= TAM) {
-
-        int sobreposicao = 0;
-
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            if (tabuleiro[linhaD1 + i][colunaD1 + i] != 0) {
-                sobreposicao = 1;
-            }
-        }
-
-        if (!sobreposicao) {
-            for (int i = 0; i < TAM_NAVIO; i++) {
-                tabuleiro[linhaD1 + i][colunaD1 + i] = 3;
+            if (abs(i - centro) + abs(j - centro) <= centro) {
+                octaedro[i][j] = 1;
+            } else {
+                octaedro[i][j] = 0;
             }
         }
     }
 
     /* =====================================================
-       6. POSICIONAMENTO NAVIO DIAGONAL SECUNDÁRIA (↙)
-       linha++ e coluna--
+       4. SOBREPOSIÇÃO DAS HABILIDADES
        ===================================================== */
 
-    if (linhaD2 + TAM_NAVIO <= TAM && colunaD2 - (TAM_NAVIO - 1) >= 0) {
+    int origemLinha = 5;
+    int origemColuna = 3;
 
-        int sobreposicao = 0;
+    for (int i = 0; i < TAM_HAB; i++) {
+        for (int j = 0; j < TAM_HAB; j++) {
 
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            if (tabuleiro[linhaD2 + i][colunaD2 - i] != 0) {
-                sobreposicao = 1;
-            }
-        }
+            int linhaTab = origemLinha - centro + i;
+            int colunaTab = origemColuna - centro + j;
 
-        if (!sobreposicao) {
-            for (int i = 0; i < TAM_NAVIO; i++) {
-                tabuleiro[linhaD2 + i][colunaD2 - i] = 3;
+            if (linhaTab >= 0 && linhaTab < TAM &&
+                colunaTab >= 0 && colunaTab < TAM) {
+
+                if (cone[i][j] == 1) {
+                    tabuleiro[linhaTab][colunaTab] = 5;
+                }
             }
         }
     }
 
     /* =====================================================
-       7. EXIBIÇÃO DO TABULEIRO
+       5. EXIBIÇÃO DO TABULEIRO
        ===================================================== */
 
-    printf("TABULEIRO BATALHA NAVAL 10x10:\n\n");
+    printf("TABULEIRO FINAL:\n\n");
 
-    for (int linha = 0; linha < TAM; linha++) {
-        for (int coluna = 0; coluna < TAM; coluna++) {
-            printf("%d ", tabuleiro[linha][coluna]);
+    for (int i = 0; i < TAM; i++) {
+        for (int j = 0; j < TAM; j++) {
+
+            if (tabuleiro[i][j] == 0)
+                printf("~ ");     // Água
+            else if (tabuleiro[i][j] == 3)
+                printf("N ");     // Navio
+            else if (tabuleiro[i][j] == 5)
+                printf("* ");     // Habilidade
+
         }
         printf("\n");
     }
